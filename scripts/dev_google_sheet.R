@@ -1,6 +1,13 @@
 library(googlesheets4)
 library(ggplot2)
 
+set.seed(12)
+
+randos <- ids::random_id(40, 2, use_openssl = FALSE)
+randos
+
+#?ids::random_id
+
 
 path_yaml <- file.path("~/Documents", "google_sheet_proj.yaml")
 
