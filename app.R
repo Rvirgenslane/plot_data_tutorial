@@ -27,6 +27,15 @@ sidebarPanel(width = 2,
 shiny::actionButton(inputId = "load_url",
 label = "load data",
 class = "btn-success"  ),
+
+shiny::conditionalPanel(
+  condition = "input.tab =='density'",
+  
+
+  
+ # selectInput('ycol', 'Y Variable', ""),
+  selectInput('disc_', 'bin', "")
+), # end condition,
 shiny::conditionalPanel(
 condition = "input.tab =='Plot'",
 
@@ -37,14 +46,24 @@ selectInput('xcol', 'X Variable', ""),
 
 selectInput('facet', 'facet Variable', "")
 
-)
+) # end condition
 ),
 mainPanel(
 shiny::tabsetPanel(id = "tab",
   
+
+# main Track --------------------------------------------------------------
+
+                   
   shiny::tabPanel("Track",
-                  shiny::plotOutput('plot2')
+                  value = "density",
+                  shiny::plotOutput('densityPlot')
                   ),  
+
+
+# main Plot ---------------------------------------------------------------
+
+
 shiny::tabPanel("Plot",
 shiny::plotOutput('plot1'),
 DT::dataTableOutput(outputId = "all_dat"))
@@ -58,8 +77,6 @@ DT::dataTableOutput(outputId = "all_dat"))
 server <- function(input, output, session) {
 
 
-
-
 # update data
 observe({
 
@@ -67,6 +84,16 @@ vars_d <- shiny::req(selectedData())
 
 vars <- setdiff(names(vars_d), c("subject_id", "jump_1_in",
          "jump_2_in", "jump_3_in"))
+
+
+# update disc_
+
+shiny::updateSelectInput(inputId =  'disc_', 
+                         selected = character(0),
+                         choices = vars %>% 
+                           stringr::str_subset(pattern = "jump",
+                                               negate = TRUE),
+                         session = session)
 
 shiny::updateSelectInput(inputId =  'xcol', 
 choices = vars %>% 
@@ -89,7 +116,9 @@ session = session,
 selected = character(0))
 
 })
-# Combine the selected variables into a new data frame
+  
+  
+# Get data
 selectedData <- shiny::reactive({
 shinybusy::show_modal_spinner(session = session)
 merg_dat <- load_data_(url = yaml_url) %>%
@@ -101,6 +130,50 @@ shinybusy::remove_modal_spinner(session = session)
 return(merg_dat)
 
 }) %>% shiny::bindEvent(input$load_url)
+
+
+# density plot ------------------------------------------------------------
+
+
+output$densityPlot <- renderPlot({
+  
+  
+  ##
+  x_var_density <- "max_jump"
+  
+  if(!shiny::isTruthy( input$disc_)){
+    
+    disc_var <- NA
+    
+  } else {
+    disc_var <- input$disc_
+    
+  }
+  
+  fil_dat <-  selectedData() %>% 
+    dplyr::filter(!is.na(.data[[x_var_density]]))
+  
+  total_counts <- fil_dat%>% 
+    shiny::req() %>% 
+    dplyr::summarise(n = dplyr::n()) %>% 
+    dplyr::pull("n") 
+  
+  fil_dat %>% 
+    ggpubr::ggdensity( x = x_var_density,
+                       add = "mean",
+                       rug = TRUE,
+                       title = glue::glue("total counts: {total_counts}"),
+                      # color = disc_var,
+                       fill = disc_var) +
+    ggplot2::scale_fill_brewer(palette = "Set2") +
+    ggplot2::scale_color_brewer(palette = "Set2")
+  
+  
+ 
+}) #%>% shiny::bindEvent(input$load_url)
+
+
+# tab plot ----------------------------------------------------------------
 
 
 output$all_dat <- DT::renderDataTable(
