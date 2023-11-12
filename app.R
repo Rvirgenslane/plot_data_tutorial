@@ -22,7 +22,7 @@ yaml_url <- yaml::read_yaml(file = path_yaml) %>%
 
 ui <- pageWithSidebar(
   headerPanel('Plot the data'),
-  sidebarPanel(
+  sidebarPanel(width = 2,
     shiny::actionButton(inputId = "load_url",
                         label = "load data",
                         class = "btn-success"  ),
@@ -31,15 +31,17 @@ ui <- pageWithSidebar(
     selectInput('facet', 'facet Variable', "")
   ),
   mainPanel(
-    plotOutput('plot1')
+    plotOutput('plot1'),
+    DT::dataTableOutput(outputId = "all_dat")
   )
 )
-
 
 # server ------------------------------------------------------------------
 
 server <- function(input, output, session) {
   
+  
+
   
   # update data
   observe({
@@ -73,7 +75,9 @@ server <- function(input, output, session) {
   # Combine the selected variables into a new data frame
   selectedData <- shiny::reactive({
     shinybusy::show_modal_spinner(session = session)
-    merg_dat <- load_data_(url = yaml_url)
+    merg_dat <- load_data_(url = yaml_url) %>%
+      dplyr::mutate(age_years = .data$age_years %>% as.factor()) %>% 
+      dplyr::mutate(dplyr::across(is.numeric, round, digits = 1)) 
     
     shinybusy::remove_modal_spinner(session = session)
     
@@ -82,6 +86,13 @@ server <- function(input, output, session) {
   }) %>% shiny::bindEvent(input$load_url)
   
 
+  output$all_dat <- DT::renderDataTable(
+    {shiny::req(selectedData())},
+    filter = "top",
+    selection = 'none',
+    options = list(scrollX = TRUE)
+    
+  )
   
   
   output$plot1 <- renderPlot({
