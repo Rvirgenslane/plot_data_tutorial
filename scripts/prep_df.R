@@ -50,7 +50,7 @@ acti_dat <- tibble::as_tibble(randos) %>%
     jump_3_in = rnorm(n = size, mean = c(59.0551))
   )
 
-acti_dat %>% View()
+acti_dat # %>% View()
   
 
 # 
