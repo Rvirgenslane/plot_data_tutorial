@@ -72,12 +72,32 @@ list_dat %>%
 
 
 # write empty -------------------------------------------------------------
-# 
-# 
-# group = group_,
-# age_years = age,
-# height_in	 = height,
-# sex = sex_
+
+library(dplyr)
+# pre
+path_yaml <- file.path("~/Documents", "google_sheet_proj.yaml")
+
+rvs_url <- yaml::read_yaml(file = path_yaml) %>% 
+  purrr::chuck("google_sheet_url")
+
+
+
+# make ids ----------------------------------------------------------------
+
+
+set.seed(12)
+size <- 80
+
+
+randos <- seq(1, size) %>% stringr::str_pad(width = 3, pad = "0")
+randos
+
+
+# syn data ----------------------------------------------------------------
+
+group_ <- sample(c("C", "R"), size = size, replace = TRUE)
+
+
 
 
 

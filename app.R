@@ -122,7 +122,9 @@ selected = character(0))
 selectedData <- shiny::reactive({
 shinybusy::show_modal_spinner(session = session)
 merg_dat <- load_data_(url = yaml_url) %>%
-dplyr::mutate(age_years = .data$age_years %>% as.factor()) %>% 
+  
+  dplyr:: mutate(dplyr::across(dplyr::any_of(c("age_years")), as.factor)) %>% 
+#dplyr::mutate(age_years = .data$age_years %>% as.factor()) %>% 
 dplyr::mutate(dplyr::across(is.numeric, round, digits = 1)) 
 
 shinybusy::remove_modal_spinner(session = session)
@@ -151,6 +153,7 @@ output$densityPlot <- renderPlot({
   }
   
   fil_dat <-  selectedData() %>% 
+    #shiny::req() %>% 
     dplyr::filter(!is.na(.data[[x_var_density]]))
   
   total_counts <- fil_dat%>% 
