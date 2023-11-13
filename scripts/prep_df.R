@@ -14,9 +14,14 @@ rvs_url <- yaml::read_yaml(file = path_yaml) %>%
 
 set.seed(12)
 size <- 80
+# 
+# randos <- ids::random_id(size, 2, use_openssl = FALSE)
+# randos
 
-randos <- ids::random_id(size, 2, use_openssl = FALSE)
+
+randos <- seq(1, size) %>% stringr::str_pad(width = 3, pad = "0")
 randos
+
 
 # syn data ----------------------------------------------------------------
 
@@ -26,16 +31,17 @@ age <- sample(seq(10,11), size = size, replace = TRUE)
 height <-rnorm(n = size, mean = c(48+11))
 # plot(hist(height))
 sex_ <- sample(c("M", "F", "U"), size = size, replace = TRUE)
-group_ <- sample(c("A", "B"), size = size, replace = TRUE)
+group_ <- sample(c("C", "R"), size = size, replace = TRUE)
 
 
 sbj_dat <- tibble::as_tibble(randos) %>% 
   purrr::set_names("subject_id") %>% 
   dplyr::mutate(
+    group = group_,
     age_years = age,
     height_in	 = height,
-    sex = sex_,
-    group = group_
+    sex = sex_
+    
   )
 
 sbj_dat
@@ -66,14 +72,22 @@ list_dat %>%
 
 
 # write empty -------------------------------------------------------------
+# 
+# 
+# group = group_,
+# age_years = age,
+# height_in	 = height,
+# sex = sex_
+
+
 
 sbj_dat_empty <- tibble::as_tibble(randos) %>% 
   purrr::set_names("subject_id") %>% 
   dplyr::mutate(
+    group = group_,
     age_years = NA,
     height_in	 = NA,
     sex = NA,
-    group = NA
   )
 
 sbj_dat_empty
