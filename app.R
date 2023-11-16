@@ -122,7 +122,8 @@ selected = character(0))
 selectedData <- shiny::reactive({
 shinybusy::show_modal_spinner(session = session)
 merg_dat <- load_data_(url = yaml_url) %>%
-  
+  dplyr::filter(dplyr::if_any(dplyr::any_of("max_jump"), ~!is.na(.x))) %>% 
+
   dplyr:: mutate(dplyr::across(dplyr::any_of(c("age_years")), as.factor)) %>% 
 #dplyr::mutate(age_years = .data$age_years %>% as.factor()) %>% 
 dplyr::mutate(dplyr::across(is.numeric, round, digits = 1)) 
@@ -152,16 +153,36 @@ output$densityPlot <- renderPlot({
     
   }
   
-  fil_dat <-  selectedData() %>% 
-    #shiny::req() %>% 
-    dplyr::filter(!is.na(.data[[x_var_density]]))
+  if(x_var_density %in% names( selectedData() )){
+    fil_dat <-  selectedData() %>% 
+      #shiny::req() %>% 
+      #dplyr::filter(!is.na(.data[[x_var_density]]))
+      dplyr::filter(dplyr::if_any(dplyr::any_of(x_var_density), ~!is.na(.x))) %>% 
+      dplyr::filter(dplyr::if_any(dplyr::any_of(x_var_density), ~.x != "")) 
+    
+    total_counts <- fil_dat %>% 
+      shiny::req() %>% 
+      dplyr::summarise(n = dplyr::n()) %>% 
+      dplyr::pull("n")  
+  } else {
+    
+    total_counts <- 0
+  }
   
-  total_counts <- fil_dat%>% 
-    shiny::req() %>% 
-    dplyr::summarise(n = dplyr::n()) %>% 
-    dplyr::pull("n") 
+ 
   
-  fil_dat %>% 
+  if(total_counts == 0){
+    print("empty")
+    ggplot2::ggplot() + 
+      ggplot2::theme_void() +
+      ggplot2::geom_text(ggplot2::aes(0,0,
+                                      label='No data'),
+                         size = 20) 
+      
+    
+  } else {
+    
+    fil_dat %>% 
     ggpubr::ggdensity( x = x_var_density,
                        add = "mean",
                        rug = TRUE,
@@ -170,6 +191,10 @@ output$densityPlot <- renderPlot({
                        fill = disc_var) +
     ggplot2::scale_fill_brewer(palette = "Set2") +
     ggplot2::scale_color_brewer(palette = "Set2")
+  
+    
+  }
+  
   
   
  
@@ -207,7 +232,7 @@ x = .data[[x_var]])) +
 ggplot2::geom_boxplot() +
 ggplot2::geom_point() +
 ggplot2::facet_wrap(facet_,
-labeller = label_both) +
+labeller = label_both, scales = "free_x") +
 ggplot2::theme_classic(base_size = 16) +
 ggplot2::scale_fill_brewer(palette = "Set2")
 })

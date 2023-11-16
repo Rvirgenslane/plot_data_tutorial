@@ -61,7 +61,8 @@ activity_dat
 merg_dat <- activity_dat %>% 
   dplyr::left_join(sub_metadata, by = "subject_id")
 
-merg_dat
+merg_dat %>% 
+  dplyr::filter(dplyr::if_any(dplyr::any_of("max_jump"), ~!is.na(.x))) 
 
 
 # plotting data -----------------------------------------------------------
